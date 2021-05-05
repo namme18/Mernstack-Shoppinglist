@@ -1,33 +1,35 @@
-const express = require("express");
-const mongoose = require("mongoose");
+const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const items = require("./routes/api/items");
+const items = require('./routes/api/items');
+const users = require('./routes/api/users');
 const path = require('path');
-
+const config = require("config");
 const app = express();
 
 // middleware
 app.use(express.json());
 app.use(cors());
 
-
 // db config
-const db = require("./config/keys").mongoURI;
+const db = config.get('mongoURI');
 
 // connect to mongodb
 mongoose
   .connect(db, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useCreateIndex: true,
   })
-  .then(() => console.log("mongoDB connected..."))
-  .catch((err) => console.log(err));
+  .then(() => console.log('mongoDB connected...'))
+  .catch(err => console.log(err));
 
 //Use routes
-app.use("/api/items", items);
+app.use('/api/items', items);
+app.use('/api/users', users);
 
 //serve static assets if in production
-if(process.env.NODE_ENV === 'production'){
+if (process.env.NODE_ENV === 'production') {
   // Set static folder
   app.use(express.static('client/build'));
 
