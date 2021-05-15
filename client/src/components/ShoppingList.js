@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 const ShoppingList = () => {
   const { items } = useSelector(state => state.rootreducer);
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(state => state.authReducer);
   useEffect(() => {
     dispatch(fetchdata());
   }, []);
@@ -17,14 +18,17 @@ const ShoppingList = () => {
           {items.map(({ _id, name }) => (
             <CSSTransition key={_id} timeout={500} classNames="fade">
               <ListGroupItem>
-                <Button
-                  className="remove-btn"
-                  color="danger"
-                  size="sm"
-                  onClick={() => dispatch(deleteItem(_id))}
-                >
-                  &times;
-                </Button>
+                {isAuthenticated ? (
+                  <Button
+                    className="remove-btn"
+                    color="danger"
+                    size="sm"
+                    onClick={() => dispatch(deleteItem(_id))}
+                  >
+                    &times;
+                  </Button>
+                ) : null}
+
                 {name}
               </ListGroupItem>
             </CSSTransition>

@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { getErrors } from './errorReducer';
+import { tokenConfig } from '../redux/extraReducer/authExtraReducer';
 
 export const fetchdata = createAsyncThunk('rootreducer/fetchdata', async () => {
   try {
@@ -9,6 +11,40 @@ export const fetchdata = createAsyncThunk('rootreducer/fetchdata', async () => {
   } catch (error) {
     throw Error(error);
   }
+});
+
+export const deleteItem = createAsyncThunk(
+  'rootreducer/deleteItem',
+  async (id, { dispatch, getState, rejectWithValue }) => {
+    return axios.delete(`/api/items/${id}`, tokenConfig(getState))
+    .then(() => {
+      return id;
+    })
+    .catch(err => {
+      const errData= {
+        msg: err.response.data.msg,
+        status: err.response.status
+      }
+      dispatch(getErrors(errData));
+      return rejectWithValue(err.response.data.msg);
+    })
+  }
+);
+
+// Add Item
+export const addItem = createAsyncThunk('rootreducer/addItem', async (newItem, {dispatch, getState, rejectWithValue}) => {
+
+    return axios.post('/api/items', newItem, tokenConfig(getState))
+    .then(res => {
+      return res.data;
+    }).catch(err => {
+      const errData = {
+        msg: err.response.data.msg,
+        status: err.response.status,
+      }
+      dispatch(getErrors(errData));
+      return rejectWithValue(err.response.data.msg);
+    })
 });
 
 export const reducerSlice = createSlice({
@@ -25,38 +61,58 @@ export const reducerSlice = createSlice({
         ...state,
       };
     },
-    deleteItem: (state, action) => {
-      const id = action.payload;
-      axios.delete(`/api/items/${id}`)
-      return {
+  },
+  extraReducers: builder => {
+    builder.addCase(fetchdata.pending, (state, action) => {
+      return{
         ...state,
-        items: state.items.filter(item => item._id !== action.payload),
-      };
-    },
-    addItem: (state, action) => {
-      const newItem = action.payload;
-      axios.post('/api/items', newItem);
-      return {
+        loading: true,
+        error: null
+      }
+    });
+    builder.addCase(fetchdata.fulfilled, (state, action) => {
+      return{
+        ...state,
+        items: action.payload,
+        loading: false
+      }
+    });
+    builder.addCase(fetchdata.rejected, (state, action)=> {
+      return{
+        ...state,
+        error: action.error.message,
+        loading: false
+      }
+    });
+    // Delete Item
+    builder.addCase(deleteItem.fulfilled, (state, action) => {
+      return{
+        ...state,
+        items: state.items.filter(item => item._id !== action.payload )
+      }
+    });
+    builder.addCase(deleteItem.rejected, (state, action) => {
+      return{
+        ...state,
+        error: action.payload
+      }
+    });
+    //AddItem
+    builder.addCase(addItem.fulfilled, (state, action) => {
+      return{
         ...state,
         items: [action.payload, ...state.items],
-      };
-    },
-  },
-  extraReducers: {
-    [fetchdata.pending]: (state, action) => {
-      state.loading = true;
-      state.error = null;
-    },
-    [fetchdata.fulfilled]: (state, action) => {
-      state.items = action.payload;
-      state.loading = false;
-    },
-    [fetchdata.rejected]: (state, action) => {
-      state.error = action.error.message;
-      state.loading = false;
-    },
-  },
+        error: null
+      }
+    });
+    builder.addCase(addItem.rejected, (state, action) => {
+      return{
+        ...state,
+        error: action.payload
+      }
+    })
+  }
 });
 
-export const { getItems, deleteItem, addItem, loading } = reducerSlice.actions;
+export const { getItems, loading } = reducerSlice.actions;
 export default reducerSlice.reducer;

@@ -9,14 +9,15 @@ import {
   Label,
   Input,
 } from 'reactstrap';
-import { addItem } from '../redux/rootreducer'
-import { useDispatch } from 'react-redux';
+import { addItem } from '../redux/rootreducer';
+import { useDispatch, useSelector } from 'react-redux';
 
 const ItemModal = () => {
+  const { isAuthenticated } = useSelector(state => state.authReducer);
   const dispatch = useDispatch();
   const [modal, setModal] = useState({
     modal: false,
-    name: ''
+    name: '',
   });
   // state = {
   //   modal: false,
@@ -26,9 +27,9 @@ const ItemModal = () => {
   const toggle = () => {
     setModal({
       ...modal,
-      modal: !modal.modal
-    })
-  }
+      modal: !modal.modal,
+    });
+  };
 
   const onChange = e => {
     setModal({
@@ -51,13 +52,14 @@ const ItemModal = () => {
   };
   return (
     <div>
-      <Button
-        color="dark"
-        style={{ marginBottom: '2rem' }}
-        onClick={toggle}
-      >
-        Add Item
-      </Button>
+      {isAuthenticated ? (
+        <Button color="dark" style={{ marginBottom: '2rem' }} onClick={toggle}>
+          Add Item
+        </Button>
+      ) : (
+        <h4 className="mb-3 ml-4">Please log in to manage items</h4>
+      )}
+
       <Modal isOpen={modal.modal} toggle={toggle}>
         <ModalHeader toggle={toggle}>Add To Shopping List</ModalHeader>
         <ModalBody>
